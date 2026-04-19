@@ -1,76 +1,78 @@
-<img width="1024" height="1536" alt="imagen_proyecto" src="https://github.com/user-attachments/assets/90005fb4-06d5-47aa-9a59-fe83ebc20b58" />
+# spark-dataframes-lab · Análisis de Datos con PySpark en Docker
 
-# Spark DataFrames Lab con entorno dockerizado
+**Versión:** `v1.0`
+**Contexto:** Proyecto de procesamiento de datos, limpieza y analítica utilizando Apache Spark y la DataFrame API.
 
-Repositorio base de la práctica de **Apache Spark con DataFrames**. Este repositorio incluye tanto el **enunciado** como el **entorno dockerizado** necesario para ejecutar la práctica en clase.
+Este repositorio contiene un flujo de trabajo completo de datos (*Data Pipeline*) desarrollado para una pequeña empresa de comercio electrónico. El sistema procesa ficheros de datos con problemas habituales en entornos reales (duplicados, valores nulos, inconsistencias de formato) para generar información limpia y útil para la toma de decisiones.
 
-## Qué incluye este repositorio
+---
 
-- `spark_jupyter/`: entorno dockerizado Spark + Jupyter proporcionado para clase
-- `spark_jupyter/docker-compose-jupyter.yml`: despliegue de Spark master, workers, history server y notebook Jupyter
-- `spark_jupyter/notebooks/iniciar_spark.py`: utilidad para crear la `SparkSession`
-- `spark_jupyter/notebooks/practica_clientes_pedidos.ipynb`: cuaderno que debes completar
-- `spark_jupyter/apps/datos/clientes.csv`: datos de clientes
-- `spark_jupyter/apps/datos/pedidos.csv`: datos de pedidos
-- `docs/enunciado.md`: enunciado detallado
-- `docs/evidencias.md`: plantilla de evidencias
-- `docs/pistas.md`: pistas técnicas
+## Objetivo del Proyecto
+El proyecto implementa una arquitectura **ETL (Extracción, Transformación y Carga)** estructurada en los siguientes pasos técnicos:
 
-## Flujo de trabajo obligatorio
+1. **Extracción (Lectura de datos):** Carga de ficheros CSV (`clientes.csv` y `pedidos.csv`) definiendo correctamente sus esquemas y opciones de lectura (`sep`, `header`, `inferSchema`).
+2. **Transformación y Limpieza:** * Eliminación de registros duplicados en el fichero de clientes.
+   * Limpieza de inconsistencias de formato (eliminación de espacios en blanco con `trim`).
+   * Tratamiento y gestión segura de valores nulos.
+   * Creación de nuevas variables de negocio (ej. `importe = cantidad * precio_unitario`).
+3. **Integración:** Combinación de ambas fuentes de datos mediante un cruce relacional (`join`), analizando la correspondencia entre tablas y la pérdida de registros huérfanos.
+4. **Análisis y SQL:** Cálculo de métricas clave (número de pedidos, ingresos totales y ticket medio) mediante agrupaciones (`groupBy`), clasificación condicional (`when`) y el uso de **Spark SQL** a través de vistas temporales.
+5. **Muestreo y Carga (Persistencia):** División del dataset (`randomSplit` y `sample`) y exportación del resultado final unificado en formato **Parquet** para optimizar futuras lecturas.
 
-1. Haz **Fork** del repositorio del profesor.
-2. Clona tu fork en local.
-3. Levanta el entorno dockerizado.
-4. Abre Jupyter y trabaja sobre el notebook.
-5. Haz commits progresivos.
-6. Sube tus cambios a GitHub.
-7. Crea el tag final `v1.0-entrega`.
+---
 
-## Cómo levantar el entorno dockerizado
+## Estructura del repositorio
 
-Sitúate dentro de la carpeta `spark_jupyter` y ejecuta:
+```text
+spark-dataframes-lab/
+├── docs/                                     # Documentación técnica y justificación
+│   ├── enunciado.md                          # Contexto y requisitos del proyecto
+│   ├── evidencias.md                         # Evidencias de ejecución y resultados
+│   └── pistas.md                             # Pistas y ayudas técnicas del proyecto
+├── img/                                      # Imágenes para la documentación
+├── spark_jupyter/                            # Entorno dockerizado (Spark + Jupyter)
+│   ├── apps/
+│   │   ├── datos/                            # Ficheros CSV originales (clientes y pedidos)
+│   │   └── salida/                           # Directorio con los resultados en formato Parquet
+│   ├── notebooks/
+│   │   ├── iniciar_spark.py                  # Script de inicialización de la sesión de Spark
+│   │   └── practica_clientes_pedidos.ipynb   # Cuaderno principal con el código PySpark
+│   ├── docker-compose-jupyter.yml            # Configuración de orquestación para levantar el clúster
+│   ├── Dockerfile                            # Receta de construcción de la imagen base
+│   └── Dockerfile.jupyter                    # Receta de construcción del entorno Jupyter
+└── README.md                                 # Documentación principal (Este archivo)
+```
+
+---
+
+## Arquitectura del proyecto
+
+![Arquitectura proyecto](./img/arquitectura_proyecto.png)
+
+---
+
+## Pasos de Ejecución (Reproducibilidad)
+
+El proyecto está diseñado para ejecutarse en un entorno contenedorizado, asegurando que las dependencias de Apache Spark funcionen en cualquier máquina.
+
+### Paso 1: Levantar el entorno Dockerizado
+Sitúate dentro de la carpeta `spark_jupyter/` y levanta el clúster (que incluye un Master, Workers y JupyterLab) ejecutando:
 
 ```bash
 docker compose -f docker-compose-jupyter.yml up -d --build
 ```
 
-## Servicios disponibles
+### Paso 2: Servicios del entorno
+Accede a JupyterLab y abre el cuaderno `practica_clientes_pedidos.ipynb`. Las rutas de los datos ya están mapeadas dentro del contenedor (`/opt/spark-apps/datos/`). Ejecuta todas las celdas secuencialmente para observar el proceso de transformación hasta la escritura del fichero Parquet.
 
-Una vez levantado el entorno, podrás acceder a:
+---
 
-- **JupyterLab**: http://localhost:8888  
-  Token: `spark`
-- **Spark Master UI**: http://localhost:8080
-- **Spark Worker 1 UI**: http://localhost:8081
-- **Spark Worker 2 UI**: http://localhost:8082
-- **Spark History Server**: http://localhost:18080
+## Decisiones de Arquitectura y Limpieza
 
-## Qué notebook debes completar
+Durante el desarrollo del análisis, se tomaron decisiones importantes para garantizar la fiabilidad de los datos:
 
-Trabaja sobre:
+1. **Uso de un Inner Join:** Al unir los clientes con sus pedidos, se utilizó un `inner join`. Esto permitió identificar y descartar registros inconsistentes (como pedidos asociados a IDs de cliente que no existían en el fichero de clientes), evitando generar categorías vacías en el análisis final.
 
-`spark_jupyter/notebooks/practica_clientes_pedidos.ipynb`
+2. **Imputación de Nulos vs Eliminación:** En lugar de borrar las filas con valores nulos (lo que habría supuesto perder ventas válidas), se aplicó una estrategia de relleno (`fillna`). Los productos vacíos se etiquetaron como "Desconocido" y las cantidades nulas se convirtieron en `0.0`, permitiendo que las operaciones matemáticas posteriores (como calcular el importe total) funcionaran sin errores.
 
-## Dónde están los datos
-
-Dentro del notebook, los datos se encuentran montados en el contenedor en:
-
-- `/opt/spark-apps/datos/clientes.csv`
-- `/opt/spark-apps/datos/pedidos.csv`
-
-Los resultados pueden guardarse, por ejemplo, en:
-
-- `/opt/spark-apps/salida/`
-
-## Entrega
-
-Debes entregar:
-
-- el enlace a tu repositorio (fork)
-- el notebook completado
-- el tag obligatorio `v1.0-entrega`
-
-```bash
-git tag v1.0-entrega
-git push origin v1.0-entrega
-```
+3. **Muestreo (Sample) vs Partición (RandomSplit):** Se aplicaron ambas funciones entendiendo sus diferencias. `sample()` se utilizó para perfilado rápido, mientras que `randomSplit(0.8, 0.2)` se aplicó para dividir el total de los datos en conjuntos de Entrenamiento y Prueba, dejando el dataset preparado para modelos predictivos.
