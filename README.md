@@ -7,6 +7,14 @@ Este repositorio contiene un flujo de trabajo completo de datos (*Data Pipeline*
 
 ---
 
+## Arquitectura del proyecto
+
+![Arquitectura proyecto](./img/arquitectura_proyecto.png)
+
+---
+
+---
+
 ## Objetivo del Proyecto
 El proyecto implementa una arquitectura **ETL (Extracción, Transformación y Carga)** estructurada en los siguientes pasos técnicos:
 
@@ -45,11 +53,6 @@ spark-dataframes-lab/
 
 ---
 
-## Arquitectura del proyecto
-
-![Arquitectura proyecto](./img/arquitectura_proyecto.png)
-
----
 
 ## Pasos de Ejecución (Reproducibilidad)
 
