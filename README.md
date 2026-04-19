@@ -13,8 +13,6 @@ Este repositorio contiene un flujo de trabajo completo de datos (*Data Pipeline*
 
 ---
 
----
-
 ## Objetivo del Proyecto
 El proyecto implementa una arquitectura **ETL (Extracción, Transformación y Carga)** estructurada en los siguientes pasos técnicos:
 
